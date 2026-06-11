@@ -8,8 +8,8 @@ import {
   hasModeB,
 } from "./env.js";
 
-// Data-plane client cache. Keys: "modeb" (env-configured single instance) or an instance ID
-// (resolved via Mode A). Values are lazily-opened, logged-in GqldbClient promises.
+// Data-plane client cache. Keys: "direct" (env-configured single instance) or an instance ID
+// (resolved via Ultipa Cloud). Values are lazily-opened, logged-in GqldbClient promises.
 const clientCache = new Map<string, Promise<GqldbClient>>();
 
 async function buildDataPlaneClient(target: string): Promise<GqldbClient> {
@@ -17,12 +17,12 @@ async function buildDataPlaneClient(target: string): Promise<GqldbClient> {
   let user: string;
   let password: string;
 
-  if (target === "modeb") {
+  if (target === "direct") {
     host = INSTANCE_HOST!;
     user = INSTANCE_USER!;
     password = INSTANCE_PASSWORD!;
   } else {
-    // Mode A: target is an instance ID. Resolve host + credentials via the Cloud control plane.
+    // Ultipa Cloud: target is an instance ID. Resolve host + credentials via the Cloud control plane.
     const inst = (await api(`/v1/instances/${target}`)) as {
       status: string;
       host: string;
@@ -73,17 +73,17 @@ export function resolveDataPlaneTarget(id: string | undefined): string {
   if (id) {
     if (!hasModeA) {
       throw new Error(
-        "This call passed an `id`, which routes through Mode A (Cloud control plane), but ULTIPA_CLOUD_API_KEY is not configured. Either set it, or omit `id` to use the Mode B instance.",
+        "This call passed an `id`, which routes through Ultipa Cloud, but ULTIPA_CLOUD_API_KEY is not configured. Either set it, or omit `id` to use the Direct instance.",
       );
     }
     return id;
   }
   if (!hasModeB) {
     throw new Error(
-      "No `id` provided and Mode B (ULTIPA_HOST + ULTIPA_USERNAME + ULTIPA_PASSWORD) is not configured. Pass `id` to target an instance via Mode A, or set the Mode B env vars to designate a default.",
+      "No `id` provided and Direct instance (ULTIPA_HOST + ULTIPA_USERNAME + ULTIPA_PASSWORD) is not configured. Pass `id` to target an instance via Ultipa Cloud, or set the Direct instance env vars to designate a default.",
     );
   }
-  return "modeb";
+  return "direct";
 }
 
 export function serializeResponse(r: any) {

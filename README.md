@@ -4,14 +4,14 @@ Model Context Protocol server for [Ultipa Cloud](https://dbaas.ultipa.com) and a
 
 ## Auth
 
-Configure either or both:
+Each MCP server entry in your client's config points at one Ultipa target via one of two paths:
 
-| | Use it if | Needs |
+| Path | Use it if | Env vars |
 |---|---|---|
-| **Ultipa Cloud account** | You manage instances via [Ultipa Cloud](https://dbaas.ultipa.com). | `ULTIPA_CLOUD_API_KEY` (create at https://dbaas.ultipa.com → Settings → API Keys) |
+| **Ultipa Cloud** | You manage instances via [Ultipa Cloud](https://dbaas.ultipa.com). | `ULTIPA_CLOUD_API_KEY` (create at https://dbaas.ultipa.com → Settings → API Keys) |
 | **Direct instance** | You have admin credentials to a single GQLDB instance. | `ULTIPA_HOST` + `ULTIPA_USERNAME` + `ULTIPA_PASSWORD`, optional `ULTIPA_GRAPH` |
 
-If neither is set, the server exits at startup with a clear error.
+Need both, or multiple direct instances? Add more entries (see [Multiple targets](#multiple-targets)).
 
 **Ultipa Cloud API key scopes** depend on which tools you'll use:
 
@@ -21,13 +21,13 @@ If neither is set, the server exits at startup with a clear error.
 | `instances:write` | State changes (create, pause, restart, upgrade, set log level, schedule backups, …) |
 | `instances:delete` | `delete_instance`, `delete_backup` |
 | `instances:credentials` | `get_instance_credentials`. Also required by the data-plane tools under Ultipa Cloud account mode, because they fetch credentials per call. |
-| `billing:read` / `billing:write` | The billing tools |
+| `billing:read`, `billing:write` | The billing tools |
 
-## Installation
+## Install
 
-### Quick install (recommended)
+### One target via install-mcp
 
-Pick the command that matches what you configured above. Replace `claude` with your client: `cursor`, `windsurf`, `vscode`, `cline`, etc.
+Replace `claude` with your client: `cursor`, `windsurf`, `vscode`, `cline`, etc.
 
 For an Ultipa Cloud account:
 
@@ -46,34 +46,45 @@ npx -y install-mcp@latest ultipa-mcp --client claude \
   --env ULTIPA_GRAPH=default
 ```
 
-For both:
+### Multiple targets
 
-```bash
-npx -y install-mcp@latest ultipa-mcp --client claude \
-  --env ULTIPA_CLOUD_API_KEY=uc_... \
-  --env ULTIPA_HOST=host:60061 \
-  --env ULTIPA_USERNAME=admin \
-  --env ULTIPA_PASSWORD=... \
-  --env ULTIPA_GRAPH=default
-```
+Each MCP server entry in your client's config points at one Ultipa target. Add as many entries as you need, with descriptive names. Claude (or any agent) sees each entry as its own toolset and picks based on what you ask (e.g. "query staging" routes to the `ultipa-staging` entry).
 
-### Manual configuration
-
-Works for any stdio MCP client (Claude Desktop, Cursor, Windsurf, VS Code MCP extensions, etc.); only the config file path differs. Example for Claude Desktop: open `claude_desktop_config.json` (Settings → Developer → Edit Config) and add:
+The same JSON shape works in any stdio MCP client; only the file path differs (Claude Desktop: `claude_desktop_config.json` via Settings → Developer → Edit Config; Cursor: `~/.cursor/mcp.json`; Windsurf, VS Code MCP extensions: see their docs).
 
 ```json
 {
   "mcpServers": {
-    "ultipa": {
+    "ultipa-cloud": {
       "command": "npx",
       "args": ["-y", "ultipa-mcp"],
       "env": {
         "ULTIPA_CLOUD_API_KEY": "uc_..."
       }
+    },
+    "ultipa-staging": {
+      "command": "npx",
+      "args": ["-y", "ultipa-mcp"],
+      "env": {
+        "ULTIPA_HOST": "staging.internal:60061",
+        "ULTIPA_USERNAME": "admin",
+        "ULTIPA_PASSWORD": "..."
+      }
+    },
+    "ultipa-prod": {
+      "command": "npx",
+      "args": ["-y", "ultipa-mcp"],
+      "env": {
+        "ULTIPA_HOST": "prod.internal:60061",
+        "ULTIPA_USERNAME": "admin",
+        "ULTIPA_PASSWORD": "..."
+      }
     }
   }
 }
 ```
+
+Restart your client after editing.
 
 ## Tools
 
@@ -100,9 +111,9 @@ Works for any stdio MCP client (Claude Desktop, Cursor, Windsurf, VS Code MCP ex
 | `get_instance_credentials` | Fetch admin username and password of the instance. |
 | `reset_admin_password` | Rotate the admin DB password. Breaks existing connections. |
 | `list_regions` | List supported regions and their Manager URLs. |
-| `list_instance_sizes` | List available sizes and pricing (optional `tier`/`region` filters). |
+| `list_instance_sizes` | List available sizes and pricing. |
 | `get_latest_version` | Latest available GQLDB version. |
-| `get_trial_status` | Free-trial eligibility (`canCreateTrial`, etc.). Pre-check before creating a free-trial instance. |
+| `get_trial_status` | Free-trial eligibility. Pre-check before creating a free-trial instance. |
 | `get_enterprise_status` | Enterprise-tier eligibility. Pre-check before creating an enterprise instance. |
 | `get_operations_lock` | Whether instance ops are globally locked (maintenance / freeze). |
 | `wait_for_instance_status` | Explicit polling helper. Rarely needed. |
@@ -127,7 +138,7 @@ Works for any stdio MCP client (Claude Desktop, Cursor, Windsurf, VS Code MCP ex
 
 | Tool | What it does |
 |---|---|
-| `get_my_ip` | Public IP of the machine running `ultipa-mcp` (pair with `add_firewall_rule` to allow `${ip}/32`). |
+| `get_my_ip` | Public IP of the machine running Ultipa MCP (pair with `add_firewall_rule` to allow `${ip}/32`). |
 | `list_firewall_rules` | IP-allowlist rules for an instance. |
 | `add_firewall_rule` | Add a CIDR to the allowlist. |
 | `remove_firewall_rule` | Remove a rule by its CIDR. |
@@ -149,25 +160,37 @@ Works for any stdio MCP client (Claude Desktop, Cursor, Windsurf, VS Code MCP ex
 |---|---|
 | `get_balance` | Current account balance and billing flags. |
 | `list_transactions` | Balance transactions (top-ups, charges, refunds). |
-| `get_usage` | Monthly usage-based billing summary (optional `month` arg). |
-| `get_payment_method` | Saved card info, or `null` if none. |
+| `get_usage` | Monthly usage-based billing summary. |
+| `get_payment_method` | Saved card info. |
 | `get_auto_reload` | Current auto-reload settings. |
-| `set_auto_reload` | Update auto-reload (`enabled`, `thresholdCents`, `targetCents`). |
-| `topup_balance` | Top up balance. With a saved card and no 3DS, credits immediately; otherwise returns a `clientSecret`. |
+| `set_auto_reload` | Update auto-reload settings. |
+| `topup_balance` | Top up balance with a saved card. |
 | `start_payment_method_setup` | Stripe Checkout URL for adding/changing the saved card. |
 
 ### Data plane
 
 | Tool | What it does |
 |---|---|
-| `test_connection` | Quick health check on the target GQLDB instance (`healthCheck()` plus latency). |
-| `run_gql_query` | Execute a GQL query and return rows. |
+| `test_connection` | Quick health check on the target GQLDB instance. |
+| `run_gql_query` | Execute a GQL query and return results. |
 | `explain_query` | Return the execution plan without running the query. |
+| `run_algo` | Run a built-in graph algorithm. Centrality, community detection, similarity, pathfinding, graph embeddings, etc. Same execution as `run_gql_query`; separate so the agent surfaces the algorithm catalog for analytical questions. |
 | `list_graphs` | List all graphs on the instance. |
-| `describe_schema` | Schema introspection. Detects `graph_mode` (OPEN / CLOSED / ONTOLOGY) and runs the right introspection statements. |
-| `get_db_version` | Live GQLDB version reported by the instance (`db.version()`). |
-| `get_db_license` | Edition + license info (`db.license()`). |
-| `reload_db_stats` | Rebuild the instance's stored statistics (`db.reload_stats()`). |
+| `describe_schema` | Detect graph mode (OPEN / CLOSED / ONTOLOGY) and run the right schema introspection. |
+| `create_graph` | Create a new graph (OPEN / CLOSED / ONTOLOGY). |
+| `delete_graph` | Drop a graph. **Destructive — wipes all nodes, edges, indices.**  |
+| `write_data` | Run a GQL DML statement the agent composes by hand. For files on the user's machine, use `import_data` instead. |
+| `import_data` | Bulk-write structured nodes / edges via the driver's gRPC bulk-insert path. Bypasses GQL composition entirely. Format-agnostic — the agent parses any local source (CSV / JSON / JSONL / GraphML / pasted text) into canonical arrays and passes them in one call. |
+| `write_procedure` | Create a stored procedure. |
+| `get_db_version` | Live GQLDB version reported by the instance. |
+| `get_db_license` | GQLDB Edition + license info. |
+| `reload_db_stats` | Rebuild the instance's stored statistics. |
+
+### Docs
+
+| Tool | What it does |
+|---|---|
+| `lookup_docs` | Fetch Ultipa documentation pages by topic. Useful for the agent to ground GQLDB features and GQL composition in authoritative reference. |
 
 ## Local development
 

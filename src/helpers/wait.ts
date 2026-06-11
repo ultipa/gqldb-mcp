@@ -1,3 +1,21 @@
+// Why two fields (status + progressStep)?
+//
+// Ultipa Cloud has no job API — state-change endpoints (resume, restart, etc.)
+// return 200 immediately and the work continues in the background. The polling
+// target is the instance object on /v1/instances/:id, but the transition
+// signal requires reading BOTH:
+//
+//   - `status`: provisioning | running | paused | suspended | error |
+//     deleting | upgrading | deleted. The first three are themselves
+//     in-transition values.
+//   - `progressStep`: a non-empty string ALWAYS means "in transition",
+//     regardless of `status`.
+//
+// Gotcha: resume-from-paused keeps `status: 'paused'` for the entire op — the
+// only signal it's in flight is `progressStep` (e.g. "Resuming instance...").
+// Same pattern for restart and set_log_level (status stays 'running', only
+// `progressStep` changes). Don't strip the `progressStep` guard thinking it's
+// redundant with `status` — it isn't.
 import { api } from "./api.js";
 
 export const STATUS_IN_TRANSITION = new Set([

@@ -6,7 +6,7 @@ export async function api(
 ) {
   if (!API_KEY) {
     throw new Error(
-      "This tool needs Mode A (ULTIPA_CLOUD_API_KEY) but only Mode B is configured.",
+      "This tool needs Ultipa Cloud (ULTIPA_CLOUD_API_KEY) but only a Direct instance is configured.",
     );
   }
   const { body, ...rest } = init;
