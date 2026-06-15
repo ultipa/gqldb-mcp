@@ -8,14 +8,14 @@ Each MCP server entry in your client's config points at one Ultipa target via on
 
 | Path | Use it if | Env vars |
 |---|---|---|
-| **Ultipa Cloud** | You manage instances via [Ultipa Cloud](https://dbaas.ultipa.com). | `ULTIPA_CLOUD_API_KEY` (create at https://dbaas.ultipa.com → Settings → API Keys) |
+| **Ultipa Cloud** | You manage instances via [Ultipa Cloud](https://dbaas.ultipa.com). | `ULTIPA_CLOUD_API_KEY` (create at [Ultipa Cloud](https://dbaas.ultipa.com) → Settings → API Keys) |
 | **Direct instance** | You have admin credentials to a single GQLDB instance. | `ULTIPA_HOST` + `ULTIPA_USERNAME` + `ULTIPA_PASSWORD`, optional `ULTIPA_GRAPH` |
 
 Need both, or multiple direct instances? Add more entries (see [Multiple targets](#multiple-targets)).
 
-**Ultipa Cloud API key scopes** depend on which tools you'll use:
+**Ultipa Cloud API key permissions** depend on which tools you'll use:
 
-| Scope | What it unlocks |
+| Permission | What it unlocks |
 |---|---|
 | `instances:read` | All read tools (list, get, metrics, …) |
 | `instances:write` | State changes (create, pause, restart, upgrade, set log level, schedule backups, …) |
@@ -40,9 +40,9 @@ For a direct instance:
 
 ```bash
 npx -y install-mcp@latest ultipa-mcp --client claude \
-  --env ULTIPA_HOST=host:60061 \
+  --env ULTIPA_HOST=<host>:<port> \
   --env ULTIPA_USERNAME=admin \
-  --env ULTIPA_PASSWORD=... \
+  --env ULTIPA_PASSWORD=<password> \
   --env ULTIPA_GRAPH=default
 ```
 
@@ -90,11 +90,15 @@ Restart your client after editing.
 
 ### Account
 
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
+
 | Tool | What it does |
 |---|---|
 | `get_account` | Authenticated account profile (email, name, balance flags). |
 
 ### Instance lifecycle
+
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 
 | Tool | What it does |
 |---|---|
@@ -118,7 +122,9 @@ Restart your client after editing.
 | `get_operations_lock` | Whether instance ops are globally locked (maintenance / freeze). |
 | `wait_for_instance_status` | Explicit polling helper. Rarely needed. |
 
-### Metrics & Logs
+### Metrics, Logs & Alerts
+
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 
 | Tool | What it does |
 |---|---|
@@ -126,15 +132,12 @@ Restart your client after editing.
 | `get_metrics_history` | Historical metrics over the last N minutes (default 60, max 14 days). |
 | `get_instance_logs` | Recent container logs (default 100 lines, max 1000). |
 | `set_log_level` | Set GQLDB log level (debug / info / warn / error). |
-
-### Alerts
-
-| Tool | What it does |
-|---|---|
 | `list_alerts` | All alerts across the account's instances. |
 | `list_instance_alerts` | Alerts for a single instance. |
 
 ### Firewall
+
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 
 | Tool | What it does |
 |---|---|
@@ -144,6 +147,8 @@ Restart your client after editing.
 | `remove_firewall_rule` | Remove a rule by its CIDR. |
 
 ### Backups
+
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 
 | Tool | What it does |
 |---|---|
@@ -155,6 +160,8 @@ Restart your client after editing.
 | `clear_backup_schedule` | Remove the schedule (existing backups kept). |
 
 ### Billing
+
+Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 
 | Tool | What it does |
 |---|---|
@@ -169,6 +176,8 @@ Restart your client after editing.
 
 ### Data plane
 
+Works with either Ultipa Cloud or a Direct instance.
+
 | Tool | What it does |
 |---|---|
 | `test_connection` | Quick health check on the target GQLDB instance. |
@@ -176,9 +185,9 @@ Restart your client after editing.
 | `explain_query` | Return the execution plan without running the query. |
 | `run_algo` | Run a built-in graph algorithm. Centrality, community detection, similarity, pathfinding, graph embeddings, etc. Same execution as `run_gql_query`; separate so the agent surfaces the algorithm catalog for analytical questions. |
 | `list_graphs` | List all graphs on the instance. |
-| `describe_schema` | Detect graph mode (OPEN / CLOSED / ONTOLOGY) and run the right schema introspection. |
+| `describe_schema` | Detect graph mode (OPEN / CLOSED / ONTOLOGY) and run schema introspection. |
 | `create_graph` | Create a new graph (OPEN / CLOSED / ONTOLOGY). |
-| `delete_graph` | Drop a graph. **Destructive — wipes all nodes, edges, indices.**  |
+| `delete_graph` | Drop a graph. |
 | `write_data` | Run a GQL DML statement the agent composes by hand. For files on the user's machine, use `import_data` instead. |
 | `import_data` | Bulk-write structured nodes / edges via the driver's gRPC bulk-insert path. Highly recommend to provide filepath to the CSV, JSON, or JSONL files. |
 | `write_procedure` | Create a stored procedure. |
@@ -187,6 +196,8 @@ Restart your client after editing.
 | `reload_db_stats` | Rebuild the instance's stored statistics. |
 
 ### Docs
+
+Works with either Ultipa Cloud or a Direct instance.
 
 | Tool | What it does |
 |---|---|

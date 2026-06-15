@@ -6,49 +6,49 @@ import { z } from "zod";
 // transformations. To add a new topic, copy the path from the repo and drop `.md`.
 const TOPICS = [
   // gql / graph pattern matching
-  "gql/pages/graph-pattern-matching/graph-pattern-matching",
-  "gql/pages/graph-pattern-matching/node-and-edge-patterns",
-  "gql/pages/graph-pattern-matching/graph-patterns",
-  "gql/pages/graph-pattern-matching/path-patterns",
-  "gql/pages/graph-pattern-matching/quantified-paths",
-  "gql/pages/graph-pattern-matching/questioned-paths",
-  "gql/pages/graph-pattern-matching/shortest-paths",
-  "gql/pages/graph-pattern-matching/cheapest-paths",
-  "gql/pages/graph-pattern-matching/khop-traversal",
+  "gql/graph-pattern-matching/graph-pattern-matching",
+  "gql/graph-pattern-matching/node-and-edge-patterns",
+  "gql/graph-pattern-matching/graph-patterns",
+  "gql/graph-pattern-matching/path-patterns",
+  "gql/graph-pattern-matching/quantified-paths",
+  "gql/graph-pattern-matching/questioned-paths",
+  "gql/graph-pattern-matching/shortest-paths",
+  "gql/graph-pattern-matching/cheapest-paths",
+  "gql/graph-pattern-matching/khop-traversal",
   // gql / graph management
-  "gql/pages/graph-management/graphs",
-  "gql/pages/graph-management/closed-graphs",
+  "gql/graph-management/graphs",
+  "gql/graph-management/closed-graphs",
   // gql / data manipulation
-  "gql/pages/data-manipulation/node-and-edge-ids",
-  "gql/pages/data-manipulation/insert", 
-  "gql/pages/data-manipulation/insert-overwrite", 
-  "gql/pages/data-manipulation/upsert", 
-  "gql/pages/data-manipulation/merge", 
-  "gql/pages/data-manipulation/foreach",
+  "gql/data-manipulation/node-and-edge-ids",
+  "gql/data-manipulation/insert", 
+  "gql/data-manipulation/insert-overwrite", 
+  "gql/data-manipulation/upsert", 
+  "gql/data-manipulation/merge", 
+  "gql/data-manipulation/foreach",
   // gql / querying
-  "gql/pages/querying/query-composition",
+  "gql/querying/query-composition",
   // gql / functions, operators, predicates, expressions
-  "gql/pages/functions/all-functions",
-  "gql/pages/operators",
-  "gql/pages/predicates",
-  "gql/pages/expressions",
+  "gql/functions/all-functions",
+  "gql/operators",
+  "gql/predicates",
+  "gql/expressions",
   // query perfermance
-  "gql/pages/query-acceleration/index",
-  "gql/pages/query-acceleration/fulltext-index",
-  "computing-engine/pages/introduction",
+  "gql/query-acceleration/index",
+  "gql/query-acceleration/fulltext-index",
+  "computing-engine/introduction",
   // ontology (RDF / OWL semantics for ontology-mode graphs)
-  "ontology/pages/introduction",
-  "ontology/pages/class-definitions",
-  "ontology/pages/object-properties",
-  "ontology/pages/data-properties",
+  "ontology/introduction",
+  "ontology/class-definitions",
+  "ontology/object-properties",
+  "ontology/data-properties",
   // graph-algorithms
-  "graph-algorithms/pages/introduction",
-  "graph-algorithms/pages/running-algorithms",
+  "graph-algorithms/introduction",
+  "graph-algorithms/running-algorithms",
   // stored-produceres
-  "stored-procedures/pages/quick-start",
-  "stored-procedures/pages/procedure-management",
-  "stored-procedures/pages/calling-procedures",
-  "stored-procedures/pages/procedure-body/procedure-body-language",
+  "stored-procedures/quick-start",
+  "stored-procedures/procedure-management",
+  "stored-procedures/calling-procedures",
+  "stored-procedures/procedure-body/procedure-body-language",
 ] as const;
 
 const REPO_BASE = "https://raw.githubusercontent.com/ultipa/ultipa-docs/main";
@@ -84,7 +84,7 @@ async function fetchRepoIndex(): Promise<string[]> {
           n.type === "blob" &&
           typeof n.path === "string" &&
           n.path.endsWith(".md") &&
-          n.path.includes("/pages/"),
+          n.path.includes("/"),
       )
       .map((n) => (n.path as string).replace(/\.md$/, ""));
   })();
@@ -101,7 +101,7 @@ function topicToFetchUrl(topic: string): string {
 }
 
 // Convert a topic slug to its rendered docs URL (for human fallback links).
-// `gql/pages/graph-management/closed-graphs` → `https://www.ultipa.com/docs/gql/closed-graphs`
+// `gql/graph-management/closed-graphs` → `https://www.ultipa.com/docs/gql/closed-graphs`
 // (ultipa.com flattens intermediate segments; only first segment + final page slug matter.)
 function topicToBrowseUrl(topic: string): string {
   const parts = topic.split("/");
@@ -126,9 +126,10 @@ function catalogResponse(prefix: string) {
 //   Call                                 Behavior
 //   -----------------------------------  ----------------------------------------------------------
 //   lookup_docs()                        Returns the curated TOPICS cheat-sheet. No network.
-//   lookup_docs({ topic: "?" })          Hits GitHub tree API, returns all .md paths under
-//                                        /pages/. Cached for process lifetime; on failure the
-//                                        cache clears so the next call retries.
+//   lookup_docs({ topic: "?" })          Hits GitHub tree API, returns all .md paths in the
+//                                        repo (root README excluded). Cached for process
+//                                        lifetime; on failure the cache clears so the next
+//                                        call retries.
 //   lookup_docs({ topic: "some/path" })  Fetches that page's raw markdown from the repo.
 //   lookup_docs({ topic: "wrong/path" }) 404 from GitHub → handler returns error JSON with
 //                                        fetchedUrl, fallbackUrl, and curatedEntryPoints so the

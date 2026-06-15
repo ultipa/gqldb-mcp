@@ -401,7 +401,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "run_algo",
-    "Run a built-in graph algorithm. GQLDB ships dozens of algorithms across categories: **centrality** (PageRank, Betweenness, Closeness, ArticleRank, Katz, HITS, etc.), **community detection** (Louvain, Leiden, Label Propagation, K-Means, HANP, etc.), **similarity**, **pathfinding** (shortest paths, BFS/DFS, k-hop), **graph embeddings**, and more. Reach for this on analytical questions ('find influential users' → PageRank; 'detect communities' → Louvain; 'shortest route X to Y' → ShortestPath) instead of hand-computing them in raw GQL — the built-ins are dramatically faster on large graphs. **Discovery**: call `lookup_docs('graph-algorithms/pages/introduction')` for the full catalog by category, then `lookup_docs('graph-algorithms/pages/<category>/<algorithm>')` for one algorithm's exact signature and parameters (e.g. `centrality/pagerank`, `community-detection/louvain`, `pathfinding/mst`). Same execution path as `run_gql_query`; this is a focused affordance so the agent surfaces the algorithm catalog instead of missing it. For non-algo, use `run_gql_query` directly.",
+    "Run a built-in graph algorithm. GQLDB ships dozens of algorithms across categories: **centrality** (PageRank, Betweenness, Closeness, ArticleRank, Katz, HITS, etc.), **community detection** (Louvain, Leiden, Label Propagation, K-Means, HANP, etc.), **similarity**, **pathfinding** (shortest paths, BFS/DFS, k-hop), **graph embeddings**, and more. Reach for this on analytical questions ('find influential users' → PageRank; 'detect communities' → Louvain; 'shortest route X to Y' → ShortestPath) instead of hand-computing them in raw GQL — the built-ins are dramatically faster on large graphs. **Discovery**: call `lookup_docs('graph-algorithms/introduction')` for the full catalog by category, then `lookup_docs('graph-algorithms/<category>/<algorithm>')` for one algorithm's exact signature and parameters (e.g. `centrality/pagerank`, `community-detection/louvain`, `pathfinding/mst`). Same execution path as `run_gql_query`; this is a focused affordance so the agent surfaces the algorithm catalog instead of missing it. For non-algo, use `run_gql_query` directly.",
     {
       ...idArg,
       gql: z
@@ -523,7 +523,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "create_graph",
-    "Create a new graph on the GQLDB instance. Ask user which graph mode is wanted if you do not know. Three options: (1) **open**: schema-free graph; labels and properties spring into existence as data is inserted. (2) **closed**: schema-enforced graph; must supply one of: `inlineDefinition` (raw graph-type fragment that goes inside `{ ... }`), `likeGraph` (copy another graph's schema), or `typedName` (bind to a named graph type). `inlineDefinition` tips: node/edge type name is the key label, node type carries optional implied labels via `:Label` syntax (joined with `&` for multiples). Example, `'NODE User (:Employee {name STRING, age UINT32}), NODE Product ({name STRING}), EDGE PURCHASED (User)-[{ts DATETIME}]->(Product)'` creates `User` nodes with label set `:User&Employee`. Edge types do NOT support implied labels. Before composing a non-trivial `inlineDefinition`, call `lookup_docs('gql/pages/graph-management/closed-graphs')` for reference. (3) **ontology**: special mode for modeling RDF data with OWL semantics. After creation, the user loads prefixes and defines classes/properties separately, you can call `lookup_docs('ontology/pages/introduction')`, `lookup_docs('ontology/pages/class-definitions')`, `lookup_docs('ontology/pages/object-properties')` and `lookup_docs('ontology/pages/data-properties')` for reference if user needs further direction.",
+    "Create a new graph on the GQLDB instance. Ask user which graph mode is wanted if you do not know. Three options: (1) **open**: schema-free graph; labels and properties spring into existence as data is inserted. (2) **closed**: schema-enforced graph; must supply one of: `inlineDefinition` (raw graph-type fragment that goes inside `{ ... }`), `likeGraph` (copy another graph's schema), or `typedName` (bind to a named graph type). `inlineDefinition` tips: node/edge type name is the key label, node type carries optional implied labels via `:Label` syntax (joined with `&` for multiples). Example, `'NODE User (:Employee {name STRING, age UINT32}), NODE Product ({name STRING}), EDGE PURCHASED (User)-[{ts DATETIME}]->(Product)'` creates `User` nodes with label set `:User&Employee`. Edge types do NOT support implied labels. Before composing a non-trivial `inlineDefinition`, call `lookup_docs('gql/graph-management/closed-graphs')` for reference. (3) **ontology**: special mode for modeling RDF data with OWL semantics. After creation, the user loads prefixes and defines classes/properties separately, you can call `lookup_docs('ontology/introduction')`, `lookup_docs('ontology/class-definitions')`, `lookup_docs('ontology/object-properties')` and `lookup_docs('ontology/data-properties')` for reference if user needs further direction.",
     {
       ...idArg,
       name: z
@@ -643,7 +643,7 @@ export function registerDataPlaneTools(server: McpServer) {
         .string()
         .min(1)
         .describe(
-          "The GQL write statement (INSERT / INSERT OVERWRITE / UPSERT / MERGE / FOREACH). Call `lookup_docs('gql/pages/data-manipulation/<statement>')` first if unsure of syntax (slugs: `insert`, `insert-overwrite`, `upsert`, `merge`, `foreach`). For node/edge `_id` semantics, call `lookup_docs('gql/pages/data-manipulation/node-and-edge-ids')`.",
+          "The GQL write statement (INSERT / INSERT OVERWRITE / UPSERT / MERGE / FOREACH). Call `lookup_docs('gql/data-manipulation/<statement>')` first if unsure of syntax (slugs: `insert`, `insert-overwrite`, `upsert`, `merge`, `foreach`). For node/edge `_id` semantics, call `lookup_docs('gql/data-manipulation/node-and-edge-ids')`.",
         ),
       ...graphArg,
     },
@@ -671,7 +671,7 @@ export function registerDataPlaneTools(server: McpServer) {
               .string()
               .optional()
               .describe(
-                "Custom `_id`. Omit to let GQLDB assign a UUID v4. See `lookup_docs('gql/pages/data-manipulation/node-and-edge-ids')`.",
+                "Custom `_id`. Omit to let GQLDB assign a UUID v4. See `lookup_docs('gql/data-manipulation/node-and-edge-ids')`.",
               ),
             labels: z
               .array(z.string())
@@ -950,7 +950,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "write_procedure",
-    "Create a stored procedure in GQLDB. **CRITICAL**: the procedure body is **NOT GQL** — it has its own grammar (control flow, expressions, iterators, traversal, parallel execution, built-in functions). Do NOT compose the body from GQL knowledge alone — the model's training data does not cover Ultipa's procedure body language. **Always `lookup_docs` BEFORE composing**: start with `lookup_docs('stored-procedures/pages/procedure-body/procedure-body-language')` for the overall grammar, then per-topic pages as needed: `procedure-body/control-flow` (if/while/for), `procedure-body/expressions`, `procedure-body/iterators-and-traversal`, `procedure-body/data-operations`, `procedure-body/parallel-execution`, `procedure-body/builtin-functions`. For the outer `CREATE PROCEDURE` envelope and parameter syntax, see `lookup_docs('stored-procedures/pages/procedure-management')`. To CALL the procedure later, use `run_gql_query` with `CALL <name>(...)`. To MANAGE (drop / show / alter) procedures, use `run_gql_query` directly.",
+    "Create a stored procedure in GQLDB. **CRITICAL**: the procedure body is **NOT GQL** — it has its own grammar (control flow, expressions, iterators, traversal, parallel execution, built-in functions). Do NOT compose the body from GQL knowledge alone — the model's training data does not cover Ultipa's procedure body language. **Always `lookup_docs` BEFORE composing**: start with `lookup_docs('stored-procedures/procedure-body/procedure-body-language')` for the overall grammar, then per-topic pages as needed: `procedure-body/control-flow` (if/while/for), `procedure-body/expressions`, `procedure-body/iterators-and-traversal`, `procedure-body/data-operations`, `procedure-body/parallel-execution`, `procedure-body/builtin-functions`. For the outer `CREATE PROCEDURE` envelope and parameter syntax, see `lookup_docs('stored-procedures/procedure-management')`. To CALL the procedure later, use `run_gql_query` with `CALL <name>(...)`. To MANAGE (drop / show / alter) procedures, use `run_gql_query` directly.",
     {
       ...idArg,
       gql: z
