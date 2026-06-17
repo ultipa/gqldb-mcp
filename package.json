@@ -23,6 +23,7 @@
     "format:check": "prettier --check \"src/**/*.ts\"",
     "clean": "rm -rf dist",
     "build": "npm run clean && tsc && chmod +x dist/index.js",
+    "build:mcpb": "bash scripts/build-mcpb.sh",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

@@ -1,0 +1,75 @@
+{
+  "manifest_version": "0.3",
+  "name": "ultipa-mcp",
+  "display_name": "Ultipa",
+  "version": "1.0.2",
+  "description": "Manage Ultipa Cloud instances and run GQL graph queries, algorithms, backups, and metrics from Claude.",
+  "long_description": "Model Context Protocol server for Ultipa Cloud and any self-managed Ultipa GQLDB instance. Provision and operate instances, run GQL queries and graph algorithms, manage backups and firewall rules, and view metrics and billing — all through natural language.",
+  "author": {
+    "name": "Ultipa",
+    "url": "https://www.ultipa.com"
+  },
+  "homepage": "https://github.com/ultipa/ultipa-mcp",
+  "documentation": "https://github.com/ultipa/ultipa-mcp#readme",
+  "support": "https://github.com/ultipa/ultipa-mcp/issues",
+  "license": "ISC",
+  "keywords": ["ultipa", "gqldb", "graph-database", "gql", "mcp"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ultipa/ultipa-mcp"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"],
+      "env": {
+        "ULTIPA_CLOUD_API_KEY": "${user_config.cloud_api_key}",
+        "ULTIPA_HOST": "${user_config.host}",
+        "ULTIPA_USERNAME": "${user_config.username}",
+        "ULTIPA_PASSWORD": "${user_config.password}",
+        "ULTIPA_GRAPH": "${user_config.graph}"
+      }
+    }
+  },
+  "user_config": {
+    "cloud_api_key": {
+      "type": "string",
+      "title": "Ultipa Cloud API Key",
+      "description": "Manage instances and run GQL via Ultipa Cloud. Create one at dbaas.ultipa.com → Settings → API Keys. Leave blank if you only use a direct instance below.",
+      "sensitive": true,
+      "required": false
+    },
+    "host": {
+      "type": "string",
+      "title": "Direct Instance Host",
+      "description": "host:port of a self-managed GQLDB instance. Needs Username + Password below. Leave blank if using a Cloud API key.",
+      "required": false
+    },
+    "username": {
+      "type": "string",
+      "title": "Direct Instance Username",
+      "description": "Admin username for the direct instance.",
+      "required": false
+    },
+    "password": {
+      "type": "string",
+      "title": "Direct Instance Password",
+      "description": "Admin password for the direct instance.",
+      "sensitive": true,
+      "required": false
+    },
+    "graph": {
+      "type": "string",
+      "title": "Default Graph (optional)",
+      "description": "Default graph name used by data-plane tools when you don't pass one explicitly.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

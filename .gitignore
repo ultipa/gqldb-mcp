@@ -8,6 +8,10 @@ yarn-error.log*
 .npm/
 *.tgz
 
+# MCPB extension build artifacts
+mcpb-build/
+*.mcpb
+
 # Env
 .env
 .env.*
