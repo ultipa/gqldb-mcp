@@ -745,12 +745,27 @@ export function registerDataPlaneTools(server: McpServer) {
   server.tool(
     "get_db_version",
     "Return the live GQLDB version reported by the instance itself. Use this when you want ground truth — the Cloud control plane's `get_instance.version` field is what Ultipa Cloud *believes* the instance runs (from metadata), which can briefly diverge during/after an upgrade. Direct-instance users can only get the version this way.",
-    { ...idArg },
+    { ...idArg, ...graphArg },
     { title: "Get DB version", readOnlyHint: true },
-    async (args: { id?: string }) => {
+    async (args: { id?: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
-      const response = await client.gql("RETURN db.version()");
+      // db.version() must execute inside a graph context. Use the passed/configured
+      // graph, else fall back to any graph on the instance — the version is the same
+      // regardless of which graph is selected.
+      let graphName = args.graph ?? DEFAULT_GRAPH;
+      if (!graphName) {
+        try {
+          const graphs: any = await client.listGraphs();
+          const arr = Array.isArray(graphs) ? graphs : (graphs?.graphs ?? []);
+          graphName = arr?.[0]?.name;
+        } catch {
+          /* leave unset — gql returns a clear "select a graph" error */
+        }
+      }
+      const cfg: QueryConfig = {};
+      if (graphName) cfg.graphName = graphName;
+      const response = await client.gql("RETURN db.version()", cfg);
       // db.version() returns a single-row, single-column scalar — surface it cleanly.
       let version: string | undefined;
       try {
@@ -780,12 +795,26 @@ export function registerDataPlaneTools(server: McpServer) {
   server.tool(
     "reload_db_stats",
     "Rebuild the instance's stored statistics. Use when the stats look stale or wrong (e.g. after a bulk import, or if `describe_schema`'s `stats` field looks off). Side effect: can be heavy on large datasets — avoid calling mid-traffic on a busy production instance unless you have to.",
-    { ...idArg },
+    { ...idArg, ...graphArg },
     { title: "Reload DB stats", destructiveHint: true },
-    async (args: { id?: string }) => {
+    async (args: { id?: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
-      const response = await client.gql("RETURN db.reload_stats()");
+      // db.reload_stats() runs inside a graph context (stats are per-graph). Use the
+      // passed/configured graph, else fall back to the first graph on the instance.
+      let graphName = args.graph ?? DEFAULT_GRAPH;
+      if (!graphName) {
+        try {
+          const graphs: any = await client.listGraphs();
+          const arr = Array.isArray(graphs) ? graphs : (graphs?.graphs ?? []);
+          graphName = arr?.[0]?.name;
+        } catch {
+          /* leave unset — gql returns a clear "select a graph" error */
+        }
+      }
+      const cfg: QueryConfig = {};
+      if (graphName) cfg.graphName = graphName;
+      const response = await client.gql("RETURN db.reload_stats()", cfg);
       return json(serializeResponse(response));
     },
   );
