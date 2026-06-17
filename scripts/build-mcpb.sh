@@ -28,6 +28,8 @@ cp manifest.json "$STAGE/manifest.json"
 cp package.json package-lock.json "$STAGE/"
 [ -f README.md ] && cp README.md "$STAGE/"
 [ -f LICENSE ] && cp LICENSE "$STAGE/"
+# Extension icon shown in Claude Desktop — must sit at the bundle root next to manifest.json.
+[ -f icon.png ] && cp icon.png "$STAGE/"
 
 echo "→ Syncing manifest version from package.json…"
 node -e '

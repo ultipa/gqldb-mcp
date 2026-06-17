@@ -6,6 +6,7 @@ export function registerAccountTools(server: McpServer) {
     "get_account",
     "Get the authenticated account's profile (email, name, balance flags, billing-related metadata). Useful as a 'who am I?' check or to surface account-wide info to the user.",
     {},
+    { title: "Get account", readOnlyHint: true },
     async () => json(await api("/v1/account")),
   );
 }

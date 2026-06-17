@@ -148,6 +148,7 @@ export function registerDocsTools(server: McpServer) {
           `Any repo path under ultipa-docs without \`.md\` (e.g. \`${TOPICS[0]}\`). Pass \`?\` to fetch the full live index of every doc page from the repo. Omit to see the curated cheat-sheet of common entry points.`,
         ),
     },
+    { title: "Look up docs", readOnlyHint: true },
     async ({ topic }) => {
       if (!topic) {
         return catalogResponse(

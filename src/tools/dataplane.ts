@@ -50,6 +50,7 @@ export function registerDataPlaneTools(server: McpServer) {
     "test_connection",
     "Quick health check on the target GQLDB instance — call this when the user asks 'can you see/connect my instance' / 'is my GQLDB reachable'. Verifies connectivity and login and returns `{ ok, target, status, latencyMs, error? }`. Much faster than running a real query — use this as the first probe.",
     { ...idArg },
+    { title: "Test connection", readOnlyHint: true },
     async (args: { id?: string }) => {
       const start = Date.now();
       let target: string;
@@ -85,12 +86,13 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "run_gql_query",
-    "Execute a literal GQL query against a GQLDB instance and return the result rows. For Ultipa Cloud targets, the API key needs the `instances:credentials` scope (used to fetch the instance's admin password). Call `lookup_docs` for the relevant topic first if uncertain about Ultipa-specific GQL syntax — training data is patchy on edges.",
+    "Execute a literal GQL query against a GQLDB instance and return the result rows. For Ultipa Cloud targets, the API key needs the `instances:credentials` scope (used to fetch the instance's admin password). Call `lookup_docs` for the relevant topic first if uncertain about Ultipa-specific GQL syntax — training data is patchy on edges. Full GQL reference: https://www.ultipa.com/docs/gql.",
     {
       ...idArg,
       query: z.string().min(1).describe("The GQL query to run"),
       ...graphArg,
     },
+    { title: "Run GQL query", destructiveHint: true },
     async (args: { id?: string; query: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -104,12 +106,13 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "explain_query",
-    "Return the execution plan for a GQL query without running it. Same connection model as `run_gql_query`.",
+    "Return the execution plan for a GQL query without running it. Same connection model as `run_gql_query`. GQL reference: https://www.ultipa.com/docs/gql.",
     {
       ...idArg,
       query: z.string().min(1).describe("The GQL query to explain"),
       ...graphArg,
     },
+    { title: "Explain query", readOnlyHint: true },
     async (args: { id?: string; query: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -123,7 +126,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "run_algo",
-    "Run a built-in graph algorithm. GQLDB ships dozens of algorithms across categories: **centrality** (PageRank, Betweenness, Closeness, ArticleRank, Katz, HITS, etc.), **community detection** (Louvain, Leiden, Label Propagation, K-Means, HANP, etc.), **similarity**, **pathfinding** (shortest paths, BFS/DFS, k-hop), **graph embeddings**, and more. Reach for this on analytical questions ('find influential users' → PageRank; 'detect communities' → Louvain; 'shortest route X to Y' → ShortestPath) instead of hand-computing them in raw GQL — the built-ins are dramatically faster on large graphs. **Discovery**: call `lookup_docs('graph-algorithms/introduction')` for the full catalog by category, then `lookup_docs('graph-algorithms/<category>/<algorithm>')` for one algorithm's exact signature and parameters (e.g. `centrality/pagerank`, `community-detection/louvain`, `pathfinding/mst`). Same execution path as `run_gql_query`; this is a focused affordance so the agent surfaces the algorithm catalog instead of missing it. For non-algo, use `run_gql_query` directly.",
+    "Run a built-in graph algorithm. GQLDB ships dozens of algorithms across categories: **centrality** (PageRank, Betweenness, Closeness, ArticleRank, Katz, HITS, etc.), **community detection** (Louvain, Leiden, Label Propagation, K-Means, HANP, etc.), **similarity**, **pathfinding** (shortest paths, BFS/DFS, k-hop), **graph embeddings**, and more. Reach for this on analytical questions ('find influential users' → PageRank; 'detect communities' → Louvain; 'shortest route X to Y' → ShortestPath) instead of hand-computing them in raw GQL — the built-ins are dramatically faster on large graphs. **Discovery**: call `lookup_docs('graph-algorithms/introduction')` for the full catalog by category, then `lookup_docs('graph-algorithms/<category>/<algorithm>')` for one algorithm's exact signature and parameters (e.g. `centrality/pagerank`, `community-detection/louvain`, `pathfinding/mst`). Same execution path as `run_gql_query`; this is a focused affordance so the agent surfaces the algorithm catalog instead of missing it. For non-algo, use `run_gql_query` directly. Algorithm reference: https://www.ultipa.com/docs/graph-algorithms/introduction.",
     {
       ...idArg,
       gql: z
@@ -134,6 +137,7 @@ export function registerDataPlaneTools(server: McpServer) {
         ),
       ...graphArg,
     },
+    { title: "Run algorithm", readOnlyHint: true },
     async (args: { id?: string; gql: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -149,6 +153,7 @@ export function registerDataPlaneTools(server: McpServer) {
     "list_graphs",
     "List all graphs available on the target GQLDB instance (returns the SDK's `GraphInfo[]` — name, mode, node/edge counts, etc.).",
     { ...idArg },
+    { title: "List graphs", readOnlyHint: true },
     async (args: { id?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -163,6 +168,7 @@ export function registerDataPlaneTools(server: McpServer) {
       ...idArg,
       ...graphArg,
     },
+    { title: "Describe schema", readOnlyHint: true },
     async (args: { id?: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -287,6 +293,7 @@ export function registerDataPlaneTools(server: McpServer) {
           "Closed mode only. Raw GQL type-definition fragment to embed inside `{ ... }`. Mutually exclusive with typedName and likeGraph.",
         ),
     },
+    { title: "Create graph", destructiveHint: true },
     async (args: {
       id?: string;
       name: string;
@@ -356,6 +363,7 @@ export function registerDataPlaneTools(server: McpServer) {
           "Graph name to drop. Must start with a letter or underscore, then letters / digits / underscores only.",
         ),
     },
+    { title: "Delete graph", destructiveHint: true },
     async (args: { id?: string; name: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -372,7 +380,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "write_data",
-    "If the GQL you are about to send contains `INSERT` statements built from rows in a file/CSV/JSON the user shared, you are using the WRONG tool — call `import_data` instead. This rule applies regardless of how natural composing INSERT statements feels; file-derived bulk writes MUST go through `import_data`. Continue here only if user wrote out a small literal record in-conversation.",
+    "If the GQL you are about to send contains `INSERT` statements built from rows in a file/CSV/JSON the user shared, you are using the WRONG tool — call `import_data` instead. This rule applies regardless of how natural composing INSERT statements feels; file-derived bulk writes MUST go through `import_data`. Continue here only if user wrote out a small literal record in-conversation. GQL write-statement reference: https://www.ultipa.com/docs/gql.",
     {
       ...idArg,
       gql: z
@@ -383,6 +391,7 @@ export function registerDataPlaneTools(server: McpServer) {
         ),
       ...graphArg,
     },
+    { title: "Write data", destructiveHint: true },
     async (args: { id?: string; gql: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -541,6 +550,7 @@ export function registerDataPlaneTools(server: McpServer) {
           "Edges only. Skip edges whose endpoint `_id` is missing in the graph (counted in `skippedCount`). When `false`, an invalid endpoint errors the batch.",
         ),
     },
+    { title: "Import data", destructiveHint: true },
     async (args: {
       id?: string;
       graph?: string;
@@ -709,7 +719,7 @@ export function registerDataPlaneTools(server: McpServer) {
 
   server.tool(
     "write_procedure",
-    "Create a stored procedure in GQLDB. **CRITICAL**: the procedure body is **NOT GQL** — it has its own grammar (control flow, expressions, iterators, traversal, parallel execution, built-in functions). Do NOT compose the body from GQL knowledge alone — the model's training data does not cover Ultipa's procedure body language. **Always `lookup_docs` BEFORE composing**: start with `lookup_docs('stored-procedures/procedure-body/procedure-body-language')` for the overall grammar, then per-topic pages as needed: `procedure-body/control-flow` (if/while/for), `procedure-body/expressions`, `procedure-body/iterators-and-traversal`, `procedure-body/data-operations`, `procedure-body/parallel-execution`, `procedure-body/builtin-functions`. For the outer `CREATE PROCEDURE` envelope and parameter syntax, see `lookup_docs('stored-procedures/procedure-management')`. To CALL the procedure later, use `run_gql_query` with `CALL <name>(...)`. To MANAGE (drop / show / alter) procedures, use `run_gql_query` directly.",
+    "Create a stored procedure in GQLDB. **CRITICAL**: the procedure body is **NOT GQL** — it has its own grammar (control flow, expressions, iterators, traversal, parallel execution, built-in functions). Do NOT compose the body from GQL knowledge alone — the model's training data does not cover Ultipa's procedure body language. **Always `lookup_docs` BEFORE composing**: start with `lookup_docs('stored-procedures/procedure-body/procedure-body-language')` for the overall grammar, then per-topic pages as needed: `procedure-body/control-flow` (if/while/for), `procedure-body/expressions`, `procedure-body/iterators-and-traversal`, `procedure-body/data-operations`, `procedure-body/parallel-execution`, `procedure-body/builtin-functions`. For the outer `CREATE PROCEDURE` envelope and parameter syntax, see `lookup_docs('stored-procedures/procedure-management')`. To CALL the procedure later, use `run_gql_query` with `CALL <name>(...)`. To MANAGE (drop / show / alter) procedures, use `run_gql_query` directly. Stored-procedure reference: https://www.ultipa.com/docs/stored-procedures/quick-start.",
     {
       ...idArg,
       gql: z
@@ -720,6 +730,7 @@ export function registerDataPlaneTools(server: McpServer) {
         ),
       ...graphArg,
     },
+    { title: "Write procedure", destructiveHint: true },
     async (args: { id?: string; gql: string; graph?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -735,6 +746,7 @@ export function registerDataPlaneTools(server: McpServer) {
     "get_db_version",
     "Return the live GQLDB version reported by the instance itself. Use this when you want ground truth — the Cloud control plane's `get_instance.version` field is what Ultipa Cloud *believes* the instance runs (from metadata), which can briefly diverge during/after an upgrade. Direct-instance users can only get the version this way.",
     { ...idArg },
+    { title: "Get DB version", readOnlyHint: true },
     async (args: { id?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -756,6 +768,7 @@ export function registerDataPlaneTools(server: McpServer) {
     "get_db_license",
     "Return the instance's edition and license info. Useful for confirming the running edition (Community / Enterprise / etc.), license expiry, and any feature flags tied to the license.",
     { ...idArg },
+    { title: "Get DB license", readOnlyHint: true },
     async (args: { id?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);
@@ -768,6 +781,7 @@ export function registerDataPlaneTools(server: McpServer) {
     "reload_db_stats",
     "Rebuild the instance's stored statistics. Use when the stats look stale or wrong (e.g. after a bulk import, or if `describe_schema`'s `stats` field looks off). Side effect: can be heavy on large datasets — avoid calling mid-traffic on a busy production instance unless you have to.",
     { ...idArg },
+    { title: "Reload DB stats", destructiveHint: true },
     async (args: { id?: string }) => {
       const target = resolveDataPlaneTarget(args.id);
       const client = await getDataPlaneClient(target);

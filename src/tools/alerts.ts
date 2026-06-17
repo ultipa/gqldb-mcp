@@ -7,6 +7,7 @@ export function registerAlertTools(server: McpServer) {
     "list_alerts",
     "List all alerts across the account's instances.",
     {},
+    { title: "List alerts", readOnlyHint: true },
     async () => json(await api("/v1/instances/alerts")),
   );
 
@@ -14,6 +15,7 @@ export function registerAlertTools(server: McpServer) {
     "list_instance_alerts",
     "List alerts for a single instance (all statuses).",
     { id: z.string().describe("The instance ID") },
+    { title: "List instance alerts", readOnlyHint: true },
     async ({ id }) => json(await api(`/v1/instances/${id}/alerts`)),
   );
 }

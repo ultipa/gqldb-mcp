@@ -7,6 +7,7 @@ export function registerFirewallTools(server: McpServer) {
     "get_my_ip",
     "Return the public IP of the machine running this MCP server (as seen by Ultipa Cloud). Useful before `add_firewall_rule` — pass `${ip}/32` as the CIDR to allow just this machine. Note: with stdio transport (the current setup), the MCP server runs on the user's machine, so this is effectively the user's outbound IP. A future hosted MCP would return the hosting server's IP instead.",
     {},
+    { title: "Get my IP", readOnlyHint: true },
     async () => json(await api("/v1/instances/my-ip")),
   );
 
@@ -14,6 +15,7 @@ export function registerFirewallTools(server: McpServer) {
     "list_firewall_rules",
     "List the IP-allowlist (firewall) rules for an instance. Only applies to instances where `firewallSupported` is true (EC2-backed); free-trial / docker-host instances don't have firewalls.",
     { id: z.string().describe("The instance ID") },
+    { title: "List firewall rules", readOnlyHint: true },
     async ({ id }) => json(await api(`/v1/instances/${id}/firewall-rules`)),
   );
 
@@ -32,6 +34,7 @@ export function registerFirewallTools(server: McpServer) {
         .optional()
         .describe("Optional human-readable note for this rule"),
     },
+    { title: "Add firewall rule", destructiveHint: true },
     async ({ id, cidr, description }) => {
       const body: Record<string, unknown> = { cidr };
       if (description !== undefined) body.description = description;
@@ -53,6 +56,7 @@ export function registerFirewallTools(server: McpServer) {
         .string()
         .describe("CIDR of the rule to remove (must match an existing rule)"),
     },
+    { title: "Remove firewall rule", destructiveHint: true },
     async ({ id, cidr }) => {
       await api(`/v1/instances/${id}/firewall-rules`, {
         method: "DELETE",

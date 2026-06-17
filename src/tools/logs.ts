@@ -16,6 +16,7 @@ export function registerLogTools(server: McpServer) {
         .default(100)
         .describe("Max number of log lines to return (1–1000). Default 100."),
     },
+    { title: "Get instance logs", readOnlyHint: true },
     async ({ id, limit }) =>
       json(await api(`/v1/instances/${id}/logs?limit=${limit}`)),
   );

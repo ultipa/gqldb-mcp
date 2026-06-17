@@ -9,6 +9,7 @@ export function registerBackupTools(server: McpServer) {
     "list_backups",
     "List all backups for an instance. Each backup has `_id`, `status` (`in_progress` | `completed` | `failed` | `restoring`), `createdAt`, and storage details.",
     { id: z.string().describe("The instance ID") },
+    { title: "List backups", readOnlyHint: true },
     async ({ id }) => json(await api(`/v1/instances/${id}/backups`)),
   );
 
@@ -24,6 +25,7 @@ export function registerBackupTools(server: McpServer) {
         .default(600_000)
         .describe("Max wait, in milliseconds. Default 600000 (10 min)."),
     },
+    { title: "Create backup", destructiveHint: true },
     async ({ id, timeoutMs }, extra) => {
       const onProgress = makeProgressReporter(extra);
       const backup = (await api(`/v1/instances/${id}/backups`, {
@@ -52,6 +54,7 @@ export function registerBackupTools(server: McpServer) {
           "The backup ID to restore from (must belong to this instance and have status 'completed')",
         ),
     },
+    { title: "Restore backup", destructiveHint: true },
     async ({ id, backupId }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/restore`, {
@@ -91,6 +94,7 @@ export function registerBackupTools(server: McpServer) {
           "Day-of-week 0–6 (0 = Sunday). Required when frequency is 'weekly'.",
         ),
     },
+    { title: "Set backup schedule", destructiveHint: true },
     async ({ id, frequency, UTC_hour, dayOfWeek }) => {
       if (frequency === "weekly" && dayOfWeek === undefined) {
         throw new Error("dayOfWeek is required when frequency is 'weekly'.");
@@ -113,6 +117,7 @@ export function registerBackupTools(server: McpServer) {
       id: z.string().describe("The instance ID the backup belongs to"),
       backupId: z.string().describe("The backup ID to delete"),
     },
+    { title: "Delete backup", destructiveHint: true },
     async ({ id, backupId }) => {
       await api(`/v1/instances/${id}/backups/${backupId}`, {
         method: "DELETE",
@@ -125,6 +130,7 @@ export function registerBackupTools(server: McpServer) {
     "clear_backup_schedule",
     "Remove the automated backup schedule from an instance (existing backups are kept). Synchronous; returns the updated instance.",
     { id: z.string().describe("The instance ID") },
+    { title: "Clear backup schedule", destructiveHint: true },
     async ({ id }) =>
       json(
         await api(`/v1/instances/${id}/backup-schedule`, { method: "DELETE" }),

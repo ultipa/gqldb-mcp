@@ -11,6 +11,7 @@ export function registerInstanceTools(server: McpServer) {
     "list_instances",
     "List all GQLDB instances on your Ultipa Cloud account.",
     {},
+    { title: "List instances", readOnlyHint: true },
     async () => json(await api("/v1/instances")),
   );
 
@@ -18,6 +19,7 @@ export function registerInstanceTools(server: McpServer) {
     "list_deleted_instances",
     "List instances that have been deleted from the account (kept as soft-deleted tombstones for audit / recovery). These do NOT appear in `list_instances`.",
     {},
+    { title: "List deleted instances", readOnlyHint: true },
     async () => json(await api("/v1/instances/deleted")),
   );
 
@@ -25,6 +27,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_instance",
     "Get details for a single instance by ID. Does NOT include the admin password — use get_instance_credentials for that.",
     { id: z.string().describe("The instance ID") },
+    { title: "Get instance", readOnlyHint: true },
     async ({ id }) => json(await api(`/v1/instances/${id}`)),
   );
 
@@ -32,6 +35,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_instance_credentials",
     "Fetch the admin DB credentials (adminUser + adminPassword) for an instance. Requires the API key to have the `instances:credentials` scope). The call is audit-logged server-side.",
     { id: z.string().describe("The instance ID") },
+    { title: "Get instance credentials", readOnlyHint: true },
     async ({ id }) => json(await api(`/v1/instances/${id}/credentials`)),
   );
 
@@ -39,6 +43,7 @@ export function registerInstanceTools(server: McpServer) {
     "list_regions",
     "List all regions Ultipa Cloud supports. Each entry has `value` (the region code used by `create_instance`, e.g. `us-east-1`), `label` (human-readable name), `provider` (e.g. `aws`), and `managerUrl` (the region's GQLDB Manager URL). Useful as a pre-step for `create_instance` or to give the user the right Manager URL for an instance.",
     {},
+    { title: "List regions", readOnlyHint: true },
     async () => json(await api("/v1/regions")),
   );
 
@@ -55,6 +60,7 @@ export function registerInstanceTools(server: McpServer) {
         .optional()
         .describe("Filter by region code, e.g. us-east-1"),
     },
+    { title: "List instance sizes", readOnlyHint: true },
     async ({ tier, region }) => {
       const q = new URLSearchParams();
       if (tier) q.set("tier", tier);
@@ -68,6 +74,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_enterprise_status",
     "Check the account's enterprise-tier eligibility. Returns `{ hasActiveEnterprise, canCreateEnterprise }`. Only meaningful for accounts whose email has enterprise sizes assigned. Pre-check before `create_instance` with an `enterprise` size.",
     {},
+    { title: "Get enterprise status", readOnlyHint: true },
     async () => json(await api("/v1/instances/enterprise-status")),
   );
 
@@ -75,6 +82,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_operations_lock",
     "Check whether instance operations are currently locked (Ultipa Cloud maintenance). Returns `{ locked }`. When `locked: true`, all write/destructive ops (create, pause, resume, restart, delete, etc.) will be rejected upstream. Useful as a pre-check before chaining state-change tools — if locked, tell the user to wait rather than triggering ops that will fail.",
     {},
+    { title: "Get operations lock", readOnlyHint: true },
     async () => json(await api("/v1/instances/operations-lock")),
   );
 
@@ -82,6 +90,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_trial_status",
     "Check the account's free-trial eligibility. Returns `{ trialStartsAt, trialEndsAt, hasActiveTrial, canCreateTrial }`. Call before `create_instance` with a `free_trial` size — if `canCreateTrial` is false (trial expired or one already running), creating will fail.",
     {},
+    { title: "Get trial status", readOnlyHint: true },
     async () => json(await api("/v1/instances/trial-status")),
   );
 
@@ -89,6 +98,7 @@ export function registerInstanceTools(server: McpServer) {
     "get_latest_version",
     "Return the latest available GQLDB version. Pair with `get_instance` to compare against an instance's current `version` before calling `upgrade_version` — saves a 409 'already on latest' from the server when there's nothing to upgrade.",
     {},
+    { title: "Get latest version", readOnlyHint: true },
     async () => json(await api("/v1/gqldb-versions/latest")),
   );
 
@@ -106,6 +116,7 @@ export function registerInstanceTools(server: McpServer) {
         ),
       sizeId: z.string().describe("Size ID from list_instance_sizes"),
     },
+    { title: "Create instance", destructiveHint: true },
     async ({ name, region, sizeId }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await onProgress?.("Submitting create request...", undefined);
@@ -136,6 +147,7 @@ export function registerInstanceTools(server: McpServer) {
       id: z.string().describe("The instance ID"),
       name: z.string().min(1).max(30).describe("New name (1–30 chars)"),
     },
+    { title: "Rename instance", destructiveHint: true },
     async ({ id, name }) =>
       json(
         await api(`/v1/instances/${id}`, {
@@ -149,6 +161,7 @@ export function registerInstanceTools(server: McpServer) {
     "pause_instance",
     "Pause a running GQLDB instance. Blocks until the pause completes and the instance has fully settled in 'paused' (typically ~60s). Stops compute billing while paused (storage still billed).",
     { id: z.string().describe("The instance ID") },
+    { title: "Pause instance", destructiveHint: true },
     async ({ id }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/pause`, { method: "POST" });
@@ -160,6 +173,7 @@ export function registerInstanceTools(server: McpServer) {
     "resume_instance",
     "Resume a paused GQLDB instance. Blocks until the resume completes and the instance is fully 'running' (typically 60–120s). Note: during resume, `status` stays 'paused' the whole time and only `progressStep` changes — that's expected.",
     { id: z.string().describe("The instance ID") },
+    { title: "Resume instance", destructiveHint: true },
     async ({ id }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/resume`, { method: "POST" });
@@ -171,6 +185,7 @@ export function registerInstanceTools(server: McpServer) {
     "restart_instance",
     "Restart a GQLDB instance. Blocks until the restart completes and the instance is back to 'running' (typically ~60s). Note: `status` stays 'running' for the whole restart — only `progressStep` changes.",
     { id: z.string().describe("The instance ID") },
+    { title: "Restart instance", destructiveHint: true },
     async ({ id }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/restart`, { method: "POST" });
@@ -182,6 +197,7 @@ export function registerInstanceTools(server: McpServer) {
     "upgrade_version",
     "Upgrade a GQLDB instance to the latest available version. Blocks until the upgrade completes and the instance is back to 'running' (can take several minutes; default timeout 5 min). Errors out with 409 if already on the latest version — call `get_latest_version` first and compare against the instance's current `version` if you want to avoid that.",
     { id: z.string().describe("The instance ID") },
+    { title: "Upgrade version", destructiveHint: true },
     async ({ id }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/upgrade`, { method: "POST" });
@@ -203,6 +219,7 @@ export function registerInstanceTools(server: McpServer) {
         .string()
         .describe("Must exactly match the target instance's current name"),
     },
+    { title: "Delete instance", destructiveHint: true },
     async ({ id, confirmName }, extra) => {
       const onProgress = makeProgressReporter(extra);
       const inst = (await api(`/v1/instances/${id}`)) as { name?: string };
@@ -231,6 +248,7 @@ export function registerInstanceTools(server: McpServer) {
           "Optional new password (6–128 chars). If omitted, the server generates one.",
         ),
     },
+    { title: "Reset admin password", destructiveHint: true },
     async ({ id, password }) =>
       json(
         await api(`/v1/instances/${id}/reset-password`, {
@@ -249,6 +267,7 @@ export function registerInstanceTools(server: McpServer) {
         .enum(["debug", "info", "warn", "error"])
         .describe("New log level"),
     },
+    { title: "Set log level", destructiveHint: true },
     async ({ id, level }, extra) => {
       const onProgress = makeProgressReporter(extra);
       await api(`/v1/instances/${id}/log-level`, {
@@ -287,6 +306,7 @@ export function registerInstanceTools(server: McpServer) {
         .default(3000)
         .describe("Polling interval, in milliseconds. Default 3000."),
     },
+    { title: "Wait for instance status", readOnlyHint: true },
     async ({ id, target, timeoutMs, pollIntervalMs }, extra) => {
       const onProgress = makeProgressReporter(extra);
       return json(

@@ -249,9 +249,6 @@ Requires Ultipa Cloud (`ULTIPA_CLOUD_API_KEY`).
 | `get_usage` | Monthly usage-based billing summary. |
 | `get_payment_method` | Saved card info. |
 | `get_auto_reload` | Current auto-reload settings. |
-| `set_auto_reload` | Update auto-reload settings. |
-| `topup_balance` | Top up balance with a saved card. |
-| `start_payment_method_setup` | Stripe Checkout URL for adding/changing the saved card. |
 
 ### Data plane
 
