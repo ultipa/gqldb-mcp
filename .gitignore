@@ -12,6 +12,10 @@ yarn-error.log*
 mcpb-build/
 *.mcpb
 
+# Local working docs (directory submission — contains test credentials)
+submission.md
+claude-directory-todo.html
+
 # Env
 .env
 .env.*
