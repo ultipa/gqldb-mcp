@@ -1,6 +1,6 @@
 {
   "name": "ultipa-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Model Context Protocol server for Ultipa Cloud and any self-managed Ultipa GQLDB instance. Operate instances, run GQL, manage backups from any MCP client (Claude Desktop, Cursor, etc.).",
   "type": "module",
   "main": "dist/index.js",

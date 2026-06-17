@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "ultipa-mcp",
   "display_name": "Ultipa",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Manage Ultipa Cloud instances and run GQL graph queries, algorithms, backups, and metrics from Claude.",
   "long_description": "Model Context Protocol server for Ultipa Cloud and any self-managed Ultipa GQLDB instance. Provision and operate instances, run GQL queries and graph algorithms, manage backups and firewall rules, and view metrics and billing — all through natural language.",
   "icon": "icon.png",
