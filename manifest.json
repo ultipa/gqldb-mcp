@@ -1,8 +1,8 @@
 {
   "manifest_version": "0.3",
-  "name": "ultipa-mcp",
+  "name": "gqldb-mcp",
   "display_name": "Ultipa",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Manage Ultipa Cloud instances and run GQL graph queries, algorithms, backups, and metrics from Claude.",
   "long_description": "Model Context Protocol server for Ultipa Cloud and any self-managed Ultipa GQLDB instance. Provision and operate instances, run GQL queries and graph algorithms, manage backups and firewall rules, and view metrics and billing — all through natural language.",
   "icon": "icon.png",
@@ -10,15 +10,15 @@
     "name": "Ultipa",
     "url": "https://www.ultipa.com"
   },
-  "homepage": "https://github.com/ultipa/ultipa-mcp",
-  "documentation": "https://github.com/ultipa/ultipa-mcp#readme",
-  "support": "https://github.com/ultipa/ultipa-mcp/issues",
+  "homepage": "https://github.com/ultipa/gqldb-mcp",
+  "documentation": "https://github.com/ultipa/gqldb-mcp#readme",
+  "support": "https://github.com/ultipa/gqldb-mcp/issues",
   "license": "ISC",
   "keywords": ["ultipa", "gqldb", "graph-database", "gql", "mcp"],
   "privacy_policies": ["https://www.ultipa.com/legal/privacy"],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ultipa/ultipa-mcp"
+    "url": "https://github.com/ultipa/gqldb-mcp"
   },
   "server": {
     "type": "node",

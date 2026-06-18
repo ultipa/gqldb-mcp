@@ -9,7 +9,7 @@ The latest published release on npm receives security updates. Older versions ar
 If you find a security issue in Ultipa MCP, please report it privately:
 
 - Email: support@ultipa.com
-- Or open a [private security advisory](https://github.com/ultipa/ultipa-mcp/security/advisories/new) on GitHub.
+- Or open a [private security advisory](https://github.com/ultipa/gqldb-mcp/security/advisories/new) on GitHub.
 
 Please include:
 

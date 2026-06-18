@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build a Claude Desktop one-click extension (.mcpb) from the compiled server.
 #
-# Produces ./ultipa-mcp.mcpb at the repo root — a self-contained bundle (compiled
+# Produces ./gqldb-mcp.mcpb at the repo root — a self-contained bundle (compiled
 # JS + production node_modules) that installs into Claude Desktop with one click and
 # prompts the user for Ultipa credentials via manifest.json's user_config.
 #
@@ -10,7 +10,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STAGE="$ROOT/mcpb-build"
-OUT="$ROOT/ultipa-mcp.mcpb"
+OUT="$ROOT/gqldb-mcp.mcpb"
 MCPB="@anthropic-ai/mcpb@latest"
 
 cd "$ROOT"
@@ -51,7 +51,7 @@ rm -f "$STAGE/package-lock.json"
 echo "→ Validating staged manifest…"
 npx --yes "$MCPB" validate "$STAGE/manifest.json"
 
-echo "→ Packing ultipa-mcp.mcpb …"
+echo "→ Packing gqldb-mcp.mcpb …"
 rm -f "$OUT"
 npx --yes "$MCPB" pack "$STAGE" "$OUT"
 

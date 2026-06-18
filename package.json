@@ -1,11 +1,14 @@
 {
-  "name": "ultipa-mcp",
-  "version": "1.0.3",
+  "name": "@ultipa-graph/gqldb-mcp",
+  "version": "1.0.4",
   "description": "Model Context Protocol server for Ultipa Cloud and any self-managed Ultipa GQLDB instance. Operate instances, run GQL, manage backups from any MCP client (Claude Desktop, Cursor, etc.).",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "ultipa-mcp": "dist/index.js"
+    "gqldb-mcp": "dist/index.js"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "dist",
@@ -40,11 +43,11 @@
   "license": "ISC",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ultipa/ultipa-mcp.git"
+    "url": "git+https://github.com/ultipa/gqldb-mcp.git"
   },
-  "homepage": "https://github.com/ultipa/ultipa-mcp#readme",
+  "homepage": "https://github.com/ultipa/gqldb-mcp#readme",
   "bugs": {
-    "url": "https://github.com/ultipa/ultipa-mcp/issues"
+    "url": "https://github.com/ultipa/gqldb-mcp/issues"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

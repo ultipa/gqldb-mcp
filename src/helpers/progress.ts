@@ -4,12 +4,12 @@ export function makeProgressReporter(
   const token = extra?._meta?.progressToken;
   if (token === undefined || token === null) {
     console.error(
-      `[ultipa-mcp] tool invoked WITHOUT _meta.progressToken — progress notifications will not be sent. Client cannot render mid-call progress.`,
+      `[gqldb-mcp] tool invoked WITHOUT _meta.progressToken — progress notifications will not be sent. Client cannot render mid-call progress.`,
     );
     return undefined;
   }
   console.error(
-    `[ultipa-mcp] progressToken received: ${JSON.stringify(token)} — will stream notifications/progress.`,
+    `[gqldb-mcp] progressToken received: ${JSON.stringify(token)} — will stream notifications/progress.`,
   );
   let tick = 0;
   return async (step: string, status: string | undefined) => {

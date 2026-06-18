@@ -85,7 +85,7 @@ process.on("SIGTERM", () => {
 
 // ── Server setup ─────────────────────────────────────────────────────────
 const server = new McpServer(
-  { name: "ultipa-mcp", version: PKG_VERSION },
+  { name: "gqldb-mcp", version: PKG_VERSION },
   { instructions: SERVER_INSTRUCTIONS },
 );
 
@@ -103,11 +103,11 @@ if (DEBUG) {
         const start = Date.now();
         try {
           const result = await handler(...callArgs);
-          console.error(`[ultipa-mcp] ${name} ok ${Date.now() - start}ms`);
+          console.error(`[gqldb-mcp] ${name} ok ${Date.now() - start}ms`);
           return result;
         } catch (e: any) {
           console.error(
-            `[ultipa-mcp] ${name} err ${Date.now() - start}ms ${e?.message ?? String(e)}`,
+            `[gqldb-mcp] ${name} err ${Date.now() - start}ms ${e?.message ?? String(e)}`,
           );
           throw e;
         }

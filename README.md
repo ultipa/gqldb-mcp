@@ -1,4 +1,4 @@
-# Ultipa MCP
+# Ultipa GQLDB MCP
 
 Model Context Protocol server for [Ultipa Cloud](https://dbaas.ultipa.com) and any self-managed Ultipa GQLDB instance. Lets MCP clients provision and operate instances, run GQL queries, manage backups, view metrics, and more, all through natural language.
 
@@ -35,7 +35,7 @@ Every path needs one Ultipa target: either an **Ultipa Cloud** API key or a **Di
 
 ### Claude Desktop (one-click extension)
 
-1. Download `ultipa-mcp.mcpb` from the [latest release](https://github.com/ultipa/ultipa-mcp/releases/latest).
+1. Download `gqldb-mcp.mcpb` from [here](https://www.ultipa.com/download).
 2. Open it, or drag it into **Settings → Extensions** in Claude Desktop. The bundle ships its own server runtime, so no Node or npm install is required.
 3. When prompted, enter **either** your Ultipa Cloud API key **or** the direct-instance host / username / password (leave the other fields blank), then enable the extension.
 
@@ -51,31 +51,17 @@ Add the server with `claude mcp add` (it runs the published npm package via `npx
 # Ultipa Cloud (API key) — --scope user makes it available in every project
 claude mcp add ultipa-cloud --scope user \
   --env ULTIPA_CLOUD_API_KEY=uc_... \
-  -- npx -y ultipa-mcp
+  -- npx -y @ultipa-graph/gqldb-mcp
 
 # Self-managed / direct instance
 claude mcp add ultipa --scope user \
   --env ULTIPA_HOST=<host>:<port> \
   --env ULTIPA_USERNAME=admin \
   --env ULTIPA_PASSWORD=... \
-  -- npx -y ultipa-mcp
+  -- npx -y @ultipa-graph/gqldb-mcp
 ```
 
-Verify with `claude mcp list` and `claude mcp get ultipa-cloud`.
-
-To share a server with your team, commit a project-scoped `.mcp.json` and pass the key through an environment variable so no secret is checked in:
-
-```json
-{
-  "mcpServers": {
-    "ultipa-cloud": {
-      "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
-      "env": { "ULTIPA_CLOUD_API_KEY": "${ULTIPA_CLOUD_API_KEY}" }
-    }
-  }
-}
-```
+Verify with `claude mcp list`.
 
 ### Manual config (any stdio client)
 
@@ -97,7 +83,7 @@ For an Ultipa Cloud account:
   "mcpServers": {
     "ultipa-cloud": {
       "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
+      "args": ["-y", "@ultipa-graph/gqldb-mcp"],
       "env": {
         "ULTIPA_CLOUD_API_KEY": "uc_..."
       }
@@ -113,7 +99,7 @@ For a direct instance:
   "mcpServers": {
     "ultipa-direct": {
       "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
+      "args": ["-y", "@ultipa-graph/gqldb-mcp"],
       "env": {
         "ULTIPA_HOST": "<host>:<port>",
         "ULTIPA_USERNAME": "admin",
@@ -136,14 +122,14 @@ Each MCP server entry points at one Ultipa target. Add as many entries as you ne
   "mcpServers": {
     "ultipa-cloud": {
       "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
+      "args": ["-y", "@ultipa-graph/gqldb-mcp"],
       "env": {
         "ULTIPA_CLOUD_API_KEY": "uc_..."
       }
     },
     "ultipa-staging": {
       "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
+      "args": ["-y", "@ultipa-graph/gqldb-mcp"],
       "env": {
         "ULTIPA_HOST": "staging.internal:60061",
         "ULTIPA_USERNAME": "admin",
@@ -152,7 +138,7 @@ Each MCP server entry points at one Ultipa target. Add as many entries as you ne
     },
     "ultipa-prod": {
       "command": "npx",
-      "args": ["-y", "ultipa-mcp"],
+      "args": ["-y", "@ultipa-graph/gqldb-mcp"],
       "env": {
         "ULTIPA_HOST": "prod.internal:60061",
         "ULTIPA_USERNAME": "admin",
@@ -304,7 +290,7 @@ Ultipa MCP runs locally as a subprocess of your MCP client and is a thin client 
 - **No conversation data** is accessed or collected — the server never reads your chat history, memory, or local files, except file paths you explicitly pass to `import_data`.
 - **Third parties:** data sent to Ultipa Cloud / your instance is handled under Ultipa's [Privacy Policy](https://www.ultipa.com/legal/privacy). The `lookup_docs` tool fetches public documentation pages from GitHub (`ultipa/ultipa-docs`).
 - **Diagnostics:** `ULTIPA_MCP_DEBUG=1` logs tool names + latency to stderr (local only); off by default.
-- **Retention:** none by this server. **Questions:** open an issue at [github.com/ultipa/ultipa-mcp/issues](https://github.com/ultipa/ultipa-mcp/issues).
+- **Retention:** none by this server. **Questions:** open an issue at [github.com/ultipa/gqldb-mcp/issues](https://github.com/ultipa/gqldb-mcp/issues).
 
 Full Ultipa privacy policy: <https://www.ultipa.com/legal/privacy>
 
