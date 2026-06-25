@@ -1,49 +1,24 @@
 #!/usr/bin/env node
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
-  DEBUG,
   INSTANCE_HOST,
   INSTANCE_PASSWORD,
   INSTANCE_USER,
+  TRANSPORT,
+  OAUTH_ISSUER,
+  OAUTH_AUDIENCE,
   hasModeA,
   hasModeB,
+  hasHttpAuth,
 } from "./helpers/env.js";
-import { SERVER_INSTRUCTIONS } from "./instructions.js";
 import { closeAllDataPlaneClients } from "./helpers/dataplane.js";
-import { registerAccountTools } from "./tools/account.js";
-import { registerInstanceTools } from "./tools/instances.js";
-import { registerMetricsTools } from "./tools/metrics.js";
-import { registerLogTools } from "./tools/logs.js";
-import { registerAlertTools } from "./tools/alerts.js";
-import { registerFirewallTools } from "./tools/firewall.js";
-import { registerBillingTools } from "./tools/billing.js";
-import { registerBackupTools } from "./tools/backups.js";
-import { registerDataPlaneTools } from "./tools/dataplane.js";
-import { registerDocsTools } from "./tools/docs.js";
+import { createMcpServer } from "./server.js";
 
-// Read package version at runtime so it stays in sync with package.json.
-// Works in both dev (tsx, file at src/index.ts) and prod (dist/index.js) since
-// package.json sits two levels up from either.
-const PKG_VERSION = (() => {
-  try {
-    const here = dirname(fileURLToPath(import.meta.url));
-    const pkg = JSON.parse(
-      readFileSync(join(here, "..", "package.json"), "utf-8"),
-    );
-    return typeof pkg.version === "string" ? pkg.version : "0.0.0";
-  } catch {
-    return "0.0.0";
-  }
-})();
-
-// ── Fail-fast — neither mode configured, OR Direct mode partially configured ─
+// ── Fail-fast: no auth path configured at all (and not in HTTP mode, where
+// the Bearer token IS the auth path).
 const partialDirect =
   !hasModeB && (!!INSTANCE_HOST || !!INSTANCE_USER || !!INSTANCE_PASSWORD);
-if (!hasModeA && (!hasModeB || partialDirect)) {
+if (!hasModeA && (!hasModeB || partialDirect) && !hasHttpAuth) {
   const lines: string[] = [];
   if (partialDirect) {
     const missing: string[] = [];
@@ -75,7 +50,7 @@ if (!hasModeA && (!hasModeB || partialDirect)) {
   process.exit(1);
 }
 
-// ── Cleanup data-plane gRPC connections on shutdown ──────────────────────
+// ── Cleanup data-plane gRPC connections on shutdown.
 process.on("SIGINT", () => {
   closeAllDataPlaneClients().finally(() => process.exit(0));
 });
@@ -83,60 +58,29 @@ process.on("SIGTERM", () => {
   closeAllDataPlaneClients().finally(() => process.exit(0));
 });
 
-// ── Server setup ─────────────────────────────────────────────────────────
-const server = new McpServer(
-  { name: "gqldb-mcp", version: PKG_VERSION },
-  { instructions: SERVER_INSTRUCTIONS },
-);
-
-// ── ULTIPA_MCP_DEBUG=1: log every tool call name + latency to stderr ─────
-// Wrap server.tool() so every registered tool's handler is instrumented. Only
-// installed when DEBUG is on, so the default path stays free of overhead.
-if (DEBUG) {
-  const originalTool = server.tool.bind(server);
-  (server as any).tool = (...args: any[]) => {
-    const handlerIdx = args.length - 1;
-    const handler = args[handlerIdx];
-    if (typeof handler === "function") {
-      const name = args[0] as string;
-      args[handlerIdx] = async (...callArgs: any[]) => {
-        const start = Date.now();
-        try {
-          const result = await handler(...callArgs);
-          console.error(`[gqldb-mcp] ${name} ok ${Date.now() - start}ms`);
-          return result;
-        } catch (e: any) {
-          console.error(
-            `[gqldb-mcp] ${name} err ${Date.now() - start}ms ${e?.message ?? String(e)}`,
-          );
-          throw e;
-        }
-      };
-    }
-    return originalTool(...(args as Parameters<typeof originalTool>));
-  };
+// ── Transport dispatch ────────────────────────────────────────────────────
+// stdio: single long-lived server, one transport. Used by Claude Desktop /
+//        Claude Code / Cursor (subprocess lifecycle).
+// http:  one McpServer per session, gated by OAuth bearer tokens. Used by
+//        Claude Web and any remote MCP client.
+if (TRANSPORT === "http") {
+  if (!OAUTH_ISSUER || !OAUTH_AUDIENCE) {
+    console.error(
+      "MCP_TRANSPORT=http requires both OAUTH_ISSUER (the Authorization Server's issuer URL, e.g. https://account.ultipa.com) and OAUTH_AUDIENCE (this MCP server's canonical URL, e.g. https://mcp.ultipa.com) to be set.",
+    );
+    process.exit(1);
+  }
+  // Dynamic import keeps the jose/http stack out of the stdio code path — the
+  // local-subprocess install (Claude Desktop, etc.) never pays for it.
+  const { startHttpServer } = await import("./http/server.js");
+  startHttpServer();
+} else if (TRANSPORT === "stdio" || TRANSPORT === undefined) {
+  const server = createMcpServer();
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+} else {
+  console.error(
+    `Unknown MCP_TRANSPORT="${TRANSPORT}". Expected "stdio" (default) or "http".`,
+  );
+  process.exit(1);
 }
-
-// ── Ultipa Cloud tools (control plane) ───────────────────────────────────
-if (hasModeA) {
-  registerAccountTools(server);
-  registerInstanceTools(server);
-  registerMetricsTools(server);
-  registerLogTools(server);
-  registerAlertTools(server);
-  registerFirewallTools(server);
-  registerBillingTools(server);
-  registerBackupTools(server);
-}
-
-// ── Data-plane tools + GQL docs lookup ───────────────────────────────────
-// Both gated by the same guard: lookup_docs is only useful when the
-// agent can actually compose and run queries, which requires a data-plane
-// target (either Direct instance or Ultipa Cloud with `id`).
-if (hasModeA || hasModeB) {
-  registerDataPlaneTools(server);
-  registerDocsTools(server);
-}
-
-const transport = new StdioServerTransport();
-await server.connect(transport);

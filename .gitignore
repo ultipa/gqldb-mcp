@@ -16,6 +16,9 @@ mcpb-build/
 submission.md
 claude-directory-todo.html
 
+# Local deploy script (hardcodes production EC2 IP / paths)
+deploy-docker.sh
+
 # Env
 .env
 .env.*
